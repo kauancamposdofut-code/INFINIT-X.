@@ -1,0 +1,463 @@
+
+name: Gerar APK INFINIT X
+
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar arquivos
+        uses: actions/checkout@v4
+
+      - name: Preparar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Preparar Android
+        uses: android-actions/setup-android@v3
+
+      - name: Preparar Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Criar projeto Android
+        shell: bash
+        run: |
+          set -e
+
+          HTML_FILE="$(find . -maxdepth 2 -type f -iname '*.html' ! -path './.git/*' | head -n 1)"
+
+          if [ -z "$HTML_FILE" ]; then
+            echo "ERRO: Não encontrei o arquivo HTML na raiz do repositório."
+            exit 1
+          fi
+
+          mkdir -p app/src/main/assets
+          mkdir -p app/src/main/java/com/infinitx/app
+          mkdir -p app/src/main/res/values
+
+          cp "$HTML_FILE" app/src/main/assets/index.html
+
+          cat > settings.gradle.kts <<'EOF'
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "INFINITX"
+          include(":app")
+          EOF
+
+          cat > build.gradle.kts <<'EOF'
+          plugins {
+              id("com.android.application") version "8.7.3" apply false
+              id("org.jetbrains.kotlin.android") version "2.0.21" apply false
+          }
+          EOF
+
+          cat > gradle.properties <<'EOF'
+          android.useAndroidX=true
+          org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+          EOF
+
+          cat > app/build.gradle.kts <<'EOF'
+          plugins {
+              id("com.android.application")
+              id("org.jetbrains.kotlin.android")
+          }
+
+          android {
+              namespace = "com.infinitx.app"
+              compileSdk = 35
+
+              defaultConfig {
+                  applicationId = "com.infinitx.app"
+                  minSdk = 23
+                  targetSdk = 32
+                  versionCode = 1
+                  versionName = "1.0"
+              }
+          }
+          EOF
+
+          cat > app/src/main/AndroidManifest.xml <<'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+              <uses-permission android:name="android.permission.INTERNET"/>
+              <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+              <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+              <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+
+              <application
+                  android:theme="@style/AppTheme"
+                  android:label="INFINIT X"
+                  android:usesCleartextTraffic="true">
+
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                      </intent-filter>
+                  </activity>
+
+                  <service
+                      android:name=".FloatingService"
+                      android:exported="false"/>
+
+                  <receiver
+                      android:name=".BootReceiver"
+                      android:enabled="true"
+                      android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                      </intent-filter>
+                  </receiver>
+
+              </application>
+          </manifest>
+          EOF
+
+          cat > app/src/main/res/values/styles.xml <<'EOF'
+          <resources>
+              <style name="AppTheme" parent="@android:style/Theme.Material.NoActionBar">
+                  <item name="android:fontFamily">sans</item>
+                  <item name="android:colorAccent">#A855F7</item>
+                  <item name="android:statusBarColor">#090014</item>
+                  <item name="android:navigationBarColor">#090014</item>
+                  <item name="android:windowLightStatusBar">false</item>
+              </style>
+          </resources>
+          EOF
+
+          cat > app/src/main/java/com/infinitx/app/MainActivity.kt <<'EOF'
+          package com.infinitx.app
+
+          import android.app.Activity
+          import android.content.Intent
+          import android.net.Uri
+          import android.os.Bundle
+          import android.provider.Settings
+          import android.webkit.WebView
+          import android.webkit.WebViewClient
+
+          class MainActivity : Activity() {
+              override fun onCreate(savedInstanceState: Bundle?) {
+                  super.onCreate(savedInstanceState)
+
+                  val web = WebView(this)
+                  web.settings.javaScriptEnabled = true
+                  web.settings.domStorageEnabled = true
+                  web.webViewClient = WebViewClient()
+                  setContentView(web)
+                  web.loadUrl("file:///android_asset/index.html")
+
+                  if (!Settings.canDrawOverlays(this)) {
+                      startActivity(
+                          Intent(
+                              Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                              Uri.parse("package:$packageName")
+                          )
+                      )
+                  }
+              }
+
+              override fun onResume() {
+                  super.onResume()
+                  if (Settings.canDrawOverlays(this)) {
+                      startForegroundService(Intent(this, FloatingService::class.java))
+                  }
+              }
+          }
+          EOF
+
+          cat > app/src/main/java/com/infinitx/app/FloatingService.kt <<'EOF'
+          package com.infinitx.app
+
+          import android.app.*
+          import android.content.Intent
+          import android.graphics.Color
+          import android.graphics.PixelFormat
+          import android.graphics.Typeface
+          import android.graphics.drawable.GradientDrawable
+          import android.os.Build
+          import android.os.Handler
+          import android.os.IBinder
+          import android.os.Looper
+          import android.provider.Settings
+          import android.view.*
+          import android.widget.*
+          import android.graphics.drawable.ColorDrawable
+
+          class FloatingService : Service() {
+              private lateinit var wm: WindowManager
+              private var bubble: View? = null
+              private var panel: View? = null
+              private lateinit var bubbleParams: WindowManager.LayoutParams
+              private val handler = Handler(Looper.getMainLooper())
+              private var lastTap = 0L
+              private var pendingTap: Runnable? = null
+
+              override fun onCreate() {
+                  super.onCreate()
+                  wm = getSystemService(WINDOW_SERVICE) as WindowManager
+                  createNotification()
+              }
+
+              private fun createNotification() {
+                  val channel = "infinitx_channel"
+                  if (Build.VERSION.SDK_INT >= 26) {
+                      val ch = NotificationChannel(
+                          channel, "INFINIT X", NotificationManager.IMPORTANCE_LOW
+                      )
+                      getSystemService(NotificationManager::class.java)
+                          .createNotificationChannel(ch)
+                  }
+
+                  val notification = if (Build.VERSION.SDK_INT >= 26) {
+                      Notification.Builder(this, channel)
+                  } else {
+                      Notification.Builder(this)
+                  }.setContentTitle("INFINIT X")
+                      .setContentText("Bolha flutuante ativa")
+                      .setSmallIcon(android.R.drawable.ic_dialog_info)
+                      .build()
+
+                  startForeground(1, notification)
+              }
+
+              override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+                  if (Settings.canDrawOverlays(this)) showBubble()
+                  return START_STICKY
+              }
+
+              private fun showBubble() {
+                  if (bubble != null) return
+
+                  val view = TextView(this).apply {
+                      text = "X"
+                      textSize = 21f
+                      setTextColor(Color.WHITE)
+                      gravity = Gravity.CENTER
+                      typeface = Typeface.DEFAULT_BOLD
+                      background = shape("#8B35E8", 100)
+                  }
+
+                  val type = if (Build.VERSION.SDK_INT >= 26)
+                      WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                  else WindowManager.LayoutParams.TYPE_PHONE
+
+                  bubbleParams = WindowManager.LayoutParams(
+                      58, 58, type,
+                      WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                      PixelFormat.TRANSLUCENT
+                  ).apply {
+                      gravity = Gravity.TOP or Gravity.START
+                      x = 20
+                      y = 250
+                  }
+
+                  var startX = 0
+                  var startY = 0
+                  var touchX = 0f
+                  var touchY = 0f
+                  var moved = false
+
+                  view.setOnTouchListener { _, event ->
+                      when (event.action) {
+                          MotionEvent.ACTION_DOWN -> {
+                              startX = bubbleParams.x
+                              startY = bubbleParams.y
+                              touchX = event.rawX
+                              touchY = event.rawY
+                              moved = false
+                              true
+                          }
+                          MotionEvent.ACTION_MOVE -> {
+                              val dx = (event.rawX - touchX).toInt()
+                              val dy = (event.rawY - touchY).toInt()
+                              if (kotlin.math.abs(dx) > 8 || kotlin.math.abs(dy) > 8)
+                                  moved = true
+                              bubbleParams.x = startX + dx
+                              bubbleParams.y = startY + dy
+                              wm.updateViewLayout(view, bubbleParams)
+                              true
+                          }
+                          MotionEvent.ACTION_UP -> {
+                              if (!moved) handleTap()
+                              true
+                          }
+                          else -> true
+                      }
+                  }
+
+                  bubble = view
+                  wm.addView(view, bubbleParams)
+              }
+
+              private fun handleTap() {
+                  val now = android.os.SystemClock.elapsedRealtime()
+                  if (now - lastTap < 300) {
+                      pendingTap?.let { handler.removeCallbacks(it) }
+                      lastTap = 0L
+                      removeBubble()
+                  } else {
+                      lastTap = now
+                      val task = Runnable { showPanel() }
+                      pendingTap = task
+                      handler.postDelayed(task, 300)
+                  }
+              }
+
+              private fun showPanel() {
+                  if (panel != null) return
+
+                  val layout = LinearLayout(this).apply {
+                      orientation = LinearLayout.VERTICAL
+                      setPadding(16, 12, 16, 14)
+                      background = shape("#160D24", 18)
+                  }
+
+                  val header = LinearLayout(this).apply {
+                      orientation = LinearLayout.HORIZONTAL
+                      gravity = Gravity.CENTER_VERTICAL
+                  }
+
+                  val title = TextView(this).apply {
+                      text = "INFINIT X"
+                      textSize = 17f
+                      setTextColor(Color.WHITE)
+                      typeface = Typeface.DEFAULT_BOLD
+                  }
+
+                  val close = TextView(this).apply {
+                      text = "✕"
+                      textSize = 20f
+                      setTextColor(Color.WHITE)
+                      gravity = Gravity.CENTER
+                  }
+
+                  header.addView(title, LinearLayout.LayoutParams(0, 44, 1f))
+                  header.addView(close, LinearLayout.LayoutParams(40, 44))
+                  layout.addView(header)
+
+                  addOption(layout, "FPS AUTO")
+                  addOption(layout, "OTIMIZAÇÃO DE JOGO")
+                  addOption(layout, "OTIMIZAÇÃO DE FPS")
+
+                  close.setOnClickListener { removePanel() }
+
+                  val type = if (Build.VERSION.SDK_INT >= 26)
+                      WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                  else WindowManager.LayoutParams.TYPE_PHONE
+
+                  val params = WindowManager.LayoutParams(
+                      260, WindowManager.LayoutParams.WRAP_CONTENT, type,
+                      WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                      PixelFormat.TRANSLUCENT
+                  ).apply {
+                      gravity = Gravity.CENTER
+                  }
+
+                  panel = layout
+                  wm.addView(layout, params)
+              }
+
+              private fun addOption(parent: LinearLayout, label: String) {
+                  val button = TextView(this).apply {
+                      text = label
+                      textSize = 13f
+                      gravity = Gravity.CENTER
+                      setTextColor(Color.WHITE)
+                      background = shape("#7028B8", 10)
+                      setPadding(8, 14, 8, 14)
+                      setOnClickListener {
+                          Toast.makeText(
+                              this@FloatingService,
+                              "Atalho informativo: confira as configurações do Android.",
+                              Toast.LENGTH_SHORT
+                          ).show()
+                      }
+                  }
+
+                  val params = LinearLayout.LayoutParams(
+                      -1, LinearLayout.LayoutParams.WRAP_CONTENT
+                  )
+                  params.topMargin = 8
+                  parent.addView(button, params)
+              }
+
+              private fun shape(color: String, radius: Int): GradientDrawable {
+                  return GradientDrawable().apply {
+                      setColor(Color.parseColor(color))
+                      cornerRadius = radius.toFloat()
+                      setStroke(2, Color.parseColor("#B56BFF"))
+                  }
+              }
+
+              private fun removeBubble() {
+                  bubble?.let { wm.removeView(it) }
+                  bubble = null
+              }
+
+              private fun removePanel() {
+                  panel?.let { wm.removeView(it) }
+                  panel = null
+              }
+
+              override fun onDestroy() {
+                  removePanel()
+                  removeBubble()
+                  super.onDestroy()
+              }
+
+              override fun onBind(intent: Intent?): IBinder? = null
+          }
+          EOF
+
+          cat > app/src/main/java/com/infinitx/app/BootReceiver.kt <<'EOF'
+          package com.infinitx.app
+
+          import android.content.BroadcastReceiver
+          import android.content.Context
+          import android.content.Intent
+          import android.provider.Settings
+
+          class BootReceiver : BroadcastReceiver() {
+              override fun onReceive(context: Context, intent: Intent) {
+                  if (intent.action == Intent.ACTION_BOOT_COMPLETED &&
+                      Settings.canDrawOverlays(context)) {
+                      context.startForegroundService(
+                          Intent(context, FloatingService::class.java)
+                      )
+                  }
+              }
+          }
+          EOF
+
+          gradle wrapper --gradle-version 8.9
+          ./gradlew assembleDebug
+
+      - name: Disponibilizar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: INFINIT-X-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
+          

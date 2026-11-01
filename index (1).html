@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050008">
+<title>INFINIT X</title>
+<style>
+:root{--bg:#050008;--panel:#0e0518;--line:#2a1250;--p:#a64dff;--p2:#7a1fff;--glow:#b266ff;--tx:#efe6ff;--mut:#9a85bd;--ok:#4dffb0}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{background:radial-gradient(900px 500px at 50% -10%,#2b0a55 0,transparent 70%),var(--bg);color:var(--tx);font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;min-height:100vh;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.wrap{max-width:900px;margin:0 auto;padding:14px 12px 40px}
+header{text-align:center;padding:18px 0 14px}
+.logo{font-size:clamp(34px,10vw,60px);font-weight:900;letter-spacing:.12em;margin:0;background:linear-gradient(90deg,#fff,var(--glow) 45%,var(--p2));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 14px #8a2fffaa);animation:pulse 3.2s ease-in-out infinite}
+.logo span{font-size:.8em}
+header p{margin:6px 0 0;color:var(--mut);font-size:14px}
+@keyframes pulse{50%{filter:drop-shadow(0 0 26px #b266ff)}}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 16px}
+.tab{background:var(--panel);border:1px solid var(--line);color:var(--mut);border-radius:14px;padding:12px 4px;cursor:pointer;font:inherit;font-weight:700;font-size:clamp(8px,2.4vw,13px);letter-spacing:.02em;line-height:1.25;transition:.2s}
+.tab b{display:block;font-size:1.5em;margin-bottom:3px}
+.tab.on{color:#fff;border-color:var(--p);background:linear-gradient(160deg,#3a0f75,#14062b);box-shadow:0 0 18px #8a2fff77,inset 0 0 14px #8a2fff33}
+.tab:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--glow);outline-offset:2px}
+.panel{display:none}.panel.on{display:block}
+.card{background:linear-gradient(180deg,#120720,#0b0414);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px}
+.card h2{margin:0 0 4px;font-size:18px}
+.card .sub{color:var(--mut);font-size:13px;margin:0 0 12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.row>*{flex:1 1 130px}
+label.f{display:block;font-size:12px;color:var(--mut);margin-bottom:4px}
+select,input[type=text],textarea{width:100%;background:#07020f;color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:11px;font:inherit;font-size:16px}
+.btn{background:linear-gradient(135deg,var(--p2),var(--p));color:#fff;border:0;border-radius:12px;padding:13px 16px;font:inherit;font-weight:800;cursor:pointer;box-shadow:0 0 16px #8a2fff66;width:100%}
+.btn:active{transform:scale(.98)}
+.btn.g{background:#1a0b30;border:1px solid var(--line);box-shadow:none;color:var(--tx);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chip{background:#07020f;border:1px solid var(--line);color:var(--mut);border-radius:99px;padding:8px 14px;cursor:pointer;font:inherit;font-size:13px}
+.chip.on{color:#fff;border-color:var(--p);background:#2a0d55}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;cursor:pointer;background:#07020f}
+.chk input{width:20px;height:20px;accent-color:var(--p);margin-top:2px;flex:none}
+.chk small{display:block;color:var(--mut);margin-top:2px}
+.bar{height:10px;background:#07020f;border:1px solid var(--line);border-radius:99px;overflow:hidden;margin:6px 0 12px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--p2),var(--glow));transition:width .4s}
+.stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:10px}
+.stat div{background:#07020f;border:1px solid var(--line);border-radius:12px;padding:10px;font-size:13px}
+.stat b{display:block;color:var(--glow);font-size:16px;margin-top:2px}
+.out{background:#07020f;border:1px dashed var(--p2);border-radius:12px;padding:12px;margin-top:10px;font-size:14px;min-height:46px;color:var(--ok)}
+.sv{display:grid;gap:10px;margin:12px 0}
+.sv div{display:grid;grid-template-columns:96px 1fr 44px;gap:8px;align-items:center;font-size:13px}
+.sv .t{height:12px;background:#07020f;border:1px solid var(--line);border-radius:99px;overflow:hidden}
+.sv .t i{display:block;height:100%;background:linear-gradient(90deg,var(--p2),var(--glow));transition:width .5s;box-shadow:0 0 10px var(--p)}
+.sv em{font-style:normal;font-weight:800;text-align:right;color:#fff}
+.list{display:grid;gap:8px}
+.item{background:#07020f;border:1px solid var(--line);border-radius:12px;padding:12px;text-align:left;color:var(--tx);font:inherit;cursor:pointer;word-break:break-all;display:flex;justify-content:space-between;gap:8px}
+.item small{color:var(--mut);flex:none}
+.item:active{border-color:var(--p)}
+.tip{font-size:13px;color:var(--mut);line-height:1.5}
+.tip li{margin-bottom:6px}
+.tg{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#07020f;border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:8px}
+.tg span{font-weight:700;font-size:14px}.tg small{display:block;color:var(--mut);font-weight:400;margin-top:2px}
+.tgb{flex:none;min-width:112px;border-radius:10px;border:1px solid var(--line);background:#1a0b30;color:var(--mut);padding:10px;font:inherit;font-weight:800;font-size:12px;cursor:pointer}
+.tgb.on{background:linear-gradient(135deg,var(--p2),var(--p));color:#fff;border-color:var(--glow);box-shadow:0 0 12px #8a2fff88}
+#arena{position:relative;height:220px;background:#07020f;border:1px solid var(--line);border-radius:14px;overflow:hidden;touch-action:manipulation}
+#xh{position:absolute;left:50%;top:50%;width:26px;height:26px;transform:translate(-50%,-50%);pointer-events:none;display:none}
+#xh:before,#xh:after{content:"";position:absolute;background:var(--ok);box-shadow:0 0 6px var(--ok)}
+#xh:before{left:12px;top:0;width:2px;height:26px}#xh:after{top:12px;left:0;height:2px;width:26px}
+#tg{position:absolute;width:44px;height:44px;border-radius:50%;border:0;background:radial-gradient(circle,#fff 0 16%,var(--p) 18% 45%,var(--p2) 48%);box-shadow:0 0 16px var(--p);cursor:pointer;padding:0}
+#fx{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.wrap{position:relative;z-index:1}
+.btn,.tab,.tgb,.chip,.ach{position:relative;overflow:hidden}
+.rip{position:absolute;border-radius:50%;background:#ffffff40;transform:scale(0);animation:rp .6s ease-out forwards;pointer-events:none}
+@keyframes rp{to{transform:scale(2.4);opacity:0}}
+.panel.on{animation:inn .35s ease}
+@keyframes inn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.card{position:relative;border-color:#35176a;box-shadow:0 0 20px #8a2fff26,inset 0 0 24px #8a2fff12}
+.card:before,.card:after{content:"";position:absolute;width:14px;height:14px;border:2px solid var(--p);opacity:.85;pointer-events:none}
+.card:before{top:-1px;left:-1px;border-right:0;border-bottom:0;border-radius:18px 0 0 0}
+.card:after{bottom:-1px;right:-1px;border-left:0;border-top:0;border-radius:0 0 18px 0}
+.btn:hover{box-shadow:0 0 26px #a64dffcc}
+.tab:hover{border-color:var(--p)}
+.emb{display:flex;align-items:center;gap:12px;margin:0 0 14px}
+.emb:before,.emb:after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--p))}
+.emb:after{transform:scaleX(-1)}
+.emb svg{width:46px;height:46px;filter:drop-shadow(0 0 8px var(--p));animation:fl 4s ease-in-out infinite}
+@keyframes fl{50%{transform:translateY(-4px)}}
+.sys{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:11px;letter-spacing:.18em;color:var(--glow);border:1px solid var(--line);border-radius:99px;padding:4px 12px;background:#0b0414}
+.sys i{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);animation:bl 1.6s infinite}
+@keyframes bl{50%{opacity:.3}}
+header:after{content:"";display:block;height:1px;margin:14px auto 0;max-width:420px;background:linear-gradient(90deg,transparent,var(--p),transparent)}
+.ac{border:1px solid var(--line);border-radius:14px;background:#07020f;margin-bottom:8px;overflow:hidden;transition:.25s}
+.ac.open{border-color:var(--p);box-shadow:0 0 16px #8a2fff55}
+.ach{width:100%;display:flex;justify-content:space-between;align-items:center;background:none;border:0;color:var(--tx);font:inherit;font-weight:800;letter-spacing:.05em;padding:15px 14px;cursor:pointer;text-align:left}
+.ach i{font-style:normal;color:var(--glow);transition:transform .25s}
+.ac.open .ach i{transform:rotate(180deg)}
+.acb{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease}
+.ac.open .acb{grid-template-rows:1fr}
+.acb>div{overflow:hidden;min-height:0;padding:0 14px}
+.ac.open .acb>div{padding:0 14px 14px}
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translate(-50%,30px);background:var(--p2);color:#fff;padding:10px 18px;border-radius:99px;font-weight:700;opacity:0;pointer-events:none;transition:.25s;box-shadow:0 0 20px #8a2fffaa;z-index:9}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+footer{text-align:center;color:var(--mut);font-size:12px;margin-top:20px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div class="wrap">
+<header>
+  <h1 class="logo">INFINIT <span>X</span></h1>
+  <p>Otimização, sensibilidade e mira em um só lugar</p>
+  <div class="sys"><i></i>SISTEMA ONLINE</div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button class="tab on" data-p="opt" role="tab"><b>⚡</b>INFINIT OPTIMIZER</button>
+  <button class="tab" data-p="sen" role="tab"><b>🎯</b>INFINIT SENSI</button>
+  <button class="tab" data-p="mir" role="tab"><b>🔴</b>INFINIT MIRA</button>
+</nav>
+
+<!-- OPTIMIZER -->
+<section id="opt" class="panel on">
+  <div class="card">
+    <h2>Otimizações</h2>
+    <p class="sub">Ative as opções que quiser.</p>
+    <div id="oTg"></div>
+  </div>
+</section>
+
+<!-- SENSI -->
+<section id="sen" class="panel">
+  <div class="card">
+    <h2>ESCOLHA SUA SENSIBILIDADE</h2>
+    <p class="sub">Toque em um nome para abrir. Valores de referência: ajuste no jogo até ficar confortável.</p>
+    <div id="pre"></div>
+  </div>
+  <div class="card">
+    <h2>Gerador de sensibilidade (0 a 200)</h2>
+    <p class="sub">Escolha seu estilo e gere um ponto de partida. Depois ajuste no jogo até ficar confortável.</p>
+    <div class="row">
+      <div><label class="f" for="sStyle">Estilo de jogo</label>
+        <select id="sStyle">
+          <option value="rusher">Rusher (rápido)</option>
+          <option value="eq" selected>Equilibrado</option>
+          <option value="prec">Preciso (mira firme)</option>
+          <option value="caos">Aleatório total (0–200)</option>
+        </select></div>
+      <div><label class="f" for="sScr">Tamanho da tela</label>
+        <select id="sScr">
+          <option value="6">Pequena</option>
+          <option value="0" selected>Média</option>
+          <option value="-6">Grande</option>
+        </select></div>
+    </div>
+    <button class="btn" id="sGen">Gerar sensibilidade</button>
+    <div class="sv" id="sVals"></div>
+    <div class="row">
+      <button class="btn g" id="sCopy">Copiar valores</button>
+      <button class="btn g" id="sSave">Salvar no histórico</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Histórico salvo</h2>
+    <p class="sub">Toque em um item para copiar.</p>
+    <div class="list" id="sHist"><div class="tip">Nenhuma sensibilidade salva ainda.</div></div>
+    <button class="btn g" id="sClear" style="margin-top:10px">Apagar histórico</button>
+  </div>
+</section>
+
+<!-- MIRA -->
+<section id="mir" class="panel">
+  <div class="card">
+    <h2>Perfil de mira</h2>
+    <p class="sub">Ligue as opções do seu perfil e toque em INJETAR: o perfil é copiado e o Free Fire abre.</p>
+    <div id="mTg"></div>
+    <div class="row" style="margin-top:10px">
+      <div style="flex:0 0 100%"><label class="f" for="mVer">Versão do jogo (Android)</label>
+        <select id="mVer"><option value="ff">Free Fire</option><option value="max">Free Fire MAX</option></select></div>
+    </div>
+    <button class="btn" id="mInj">INJETAR</button>
+  </div>
+</section>
+
+<footer>INFINIT X · sem instalação · feito para o navegador</footer>
+</div>
+<div id="toast" role="status"></div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const store={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a,pick=a=>a[rnd(0,a.length-1)];
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),1500)}
+async function copy(t,q){try{await navigator.clipboard.writeText(t)}catch(e){const a=document.createElement('textarea');a.value=t;a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.focus();a.select();try{document.execCommand('copy')}catch(x){}a.remove()}if(!q)toast('Copiado!')}
+
+/* Abas */
+function openTab(id){$$('.tab').forEach(b=>{const on=b.dataset.p===id;b.classList.toggle('on',on);b.setAttribute('aria-selected',on)});$$('.panel').forEach(p=>p.classList.toggle('on',p.id===id));store.set('ix_tab',id)}
+$$('.tab').forEach(b=>b.onclick=()=>openTab(b.dataset.p));
+openTab(store.get('ix_tab','opt'));
+
+/* OPTIMIZER */
+const OP=[["fpsa","FPS AUTO"],["fps","OTIMIZAÇÃO DE FPS"],["jogo","OTIMIZAÇÃO DE JOGO"],["pest","ESTABILIZAR PING"],["fest","ESTABILIZAR FPS"],["cache","LIMPAR CACHE"],["pmel","MELHORAR PING"]];
+const ost=store.get('ix_opt2',{});
+$('#oTg').innerHTML=OP.map(o=>`<div class="tg"><span>${o[1]}</span><button class="tgb ${ost[o[0]]?'on':''}" data-k="${o[0]}" aria-pressed="${!!ost[o[0]]}">${ost[o[0]]?'ATIVADO':'ATIVAR'}</button></div>`).join('');
+$$('#oTg .tgb').forEach(b=>b.onclick=()=>{const k=b.dataset.k;ost[k]=!ost[k];store.set('ix_opt2',ost);b.classList.toggle('on',!!ost[k]);b.textContent=ost[k]?'ATIVADO':'ATIVAR';b.setAttribute('aria-pressed',!!ost[k])});
+
+/* SENSI */
+const KEYS=["Geral","Red Dot","Mira 2x","Mira 4x","AWM","Olhar livre"];
+const RNG={rusher:[[180,200],[170,195],[160,190],[150,185],[110,150],[120,160]],
+eq:[[150,185],[140,175],[130,165],[120,155],[90,130],[100,140]],
+prec:[[110,150],[100,140],[95,135],[85,125],[60,100],[80,120]],
+caos:[[0,200],[0,200],[0,200],[0,200],[0,200],[0,200]]};
+let cur=null,hist=store.get('ix_hist',[]);
+const clamp=v=>Math.max(0,Math.min(200,v));
+function genSens(){
+  const st=$('#sStyle').value,sh=st==='caos'?0:+$('#sScr').value;
+  cur=RNG[st].map(r=>clamp(rnd(r[0],r[1])+sh));
+  $('#sVals').innerHTML=cur.map((v,i)=>`<div><span>${KEYS[i]}</span><span class="t"><i style="width:${v/2}%"></i></span><em>${v}</em></div>`).join('');
+}
+const fmt=a=>KEYS.map((k,i)=>k+': '+a[i]).join(' | ');
+$('#sGen').onclick=genSens;
+$('#sCopy').onclick=()=>{if(!cur)genSens();copy(fmt(cur))};
+$('#sSave').onclick=()=>{if(!cur)genSens();hist=[cur,...hist].slice(0,8);store.set('ix_hist',hist);drawHist();toast('Salvo!')};
+$('#sClear').onclick=()=>{hist=[];store.set('ix_hist',hist);drawHist();toast('Histórico apagado')};
+function drawHist(){
+  const h=$('#sHist');
+  if(!hist.length){h.innerHTML='<div class="tip">Nenhuma sensibilidade salva ainda.</div>';return}
+  h.innerHTML=hist.map((a,i)=>`<button class="item" data-i="${i}"><span>${a.join(' · ')}</span><small>copiar</small></button>`).join('');
+  $$('#sHist .item').forEach(b=>b.onclick=()=>copy(fmt(hist[+b.dataset.i])));
+}
+drawHist();genSens();
+
+/* PRESETS */
+const PRE_L=[["SENSI THURZIN",[195,188,172,165,128,150]],["SENSI PHZIN",[188,180,168,158,120,145]],["SENSI APELAPATO",[200,192,178,170,135,155]],["SENSI NOBRU",[185,178,165,155,115,140]],["SENSI FREITAS",[192,184,174,162,122,148]],["SENSI DEUSA",[175,168,158,150,110,135]],["SENSI ZEZO",[198,190,176,168,130,152]],["SENSI BACK",[182,174,162,152,112,138]]];
+$('#pre').innerHTML=PRE_L.map((p,i)=>`<div class="ac"><button class="ach" aria-expanded="false"><span>${p[0]}</span><i>▾</i></button><div class="acb"><div><div class="sv">${p[1].map((v,j)=>`<div><span>${KEYS[j]}</span><span class="t"><i style="width:${v/2}%"></i></span><em>${v}</em></div>`).join('')}</div><button class="btn" data-c="${i}">COPIAR SENSI</button></div></div></div>`).join('');
+$$('#pre .ach').forEach(h=>h.onclick=()=>{const a=h.parentElement,o=!a.classList.contains('open');
+  $$('#pre .ac').forEach(x=>{x.classList.remove('open');x.querySelector('.ach').setAttribute('aria-expanded','false')});
+  if(o){a.classList.add('open');h.setAttribute('aria-expanded','true')}});
+$$('#pre [data-c]').forEach(b=>b.onclick=()=>{const p=PRE_L[+b.dataset.c];copy(p[0]+'\n'+fmt(p[1]))});
+
+/* EFEITOS */
+const EMB='<svg viewBox="0 0 48 48"><polygon points="24,3 43,14 43,34 24,45 5,34 5,14" fill="#12052a" stroke="#a64dff" stroke-width="2"/><path d="M12 24c0-4 3-7 6-7 6 0 6 14 12 14 3 0 6-3 6-7s-3-7-6-7c-6 0-6 14-12 14-3 0-6-3-6-7z" fill="none" stroke="#d9b3ff" stroke-width="2.5" stroke-linecap="round"/></svg>';
+$$('.panel').forEach(p=>p.insertAdjacentHTML('afterbegin','<div class="emb" aria-hidden="true">'+EMB+'</div>'));
+document.addEventListener('pointerdown',e=>{const b=e.target.closest('.btn,.tab,.tgb,.chip,.ach');if(!b)return;
+  const r=b.getBoundingClientRect(),d=Math.max(r.width,r.height),s=document.createElement('span');
+  s.className='rip';s.style.cssText='width:'+d+'px;height:'+d+'px;left:'+(e.clientX-r.left-d/2)+'px;top:'+(e.clientY-r.top-d/2)+'px';
+  b.appendChild(s);setTimeout(()=>s.remove(),600)});
+(()=>{const c=$('#fx'),x=c.getContext('2d');if(!x||matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  let w,h;const P=[];const size=()=>{w=c.width=innerWidth;h=c.height=innerHeight};size();addEventListener('resize',size);
+  for(let i=0;i<(innerWidth<600?26:48);i++)P.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.6+.4,v:Math.random()*.25+.08,a:Math.random()*.5+.2});
+  (function f(){if(!document.hidden){x.clearRect(0,0,w,h);for(const p of P){p.y-=p.v;if(p.y<-4){p.y=h+4;p.x=Math.random()*w}
+    x.beginPath();x.arc(p.x,p.y,p.r,0,6.283);x.fillStyle='rgba(178,102,255,'+p.a+')';x.shadowColor='#a64dff';x.shadowBlur=8;x.fill()}}requestAnimationFrame(f)})();
+})();
+
+/* MIRA */
+const MI=[["sensi","Ativar Sensi Auto","Gera a sensibilidade pelo estilo equilibrado"],["fixa","Ativar Mira Fixa","Mostra a mira no centro do treino"],["trem","Tirar Tremedeiras","Inclui dicas de estabilidade das mãos"],["recuo","Reduzir recuo","Baixa a sensi de Mira 2x, 4x e AWM em 10"],["cal","Calibrar sensi","Usa a média das sensis salvas no histórico"],["prec","Aumentar precisão","Baixa Red Dot, 2x e 4x em 8"]];
+let mst=store.get('ix_mir',{});MI.forEach(m=>{if(!(m[0] in mst))mst[m[0]]=true});
+let mTxt='';
+function drawMir(){
+  $('#mTg').innerHTML=MI.map(m=>`<div class="tg"><span>${m[1]}<small>${m[2]}</small></span><button class="tgb ${mst[m[0]]?'on':''}" data-k="${m[0]}" aria-pressed="${!!mst[m[0]]}">${mst[m[0]]?'ATIVADO':'DESATIVADO'}</button></div>`).join('');
+  $$('#mTg .tgb').forEach(b=>b.onclick=()=>{mst[b.dataset.k]=!mst[b.dataset.k];store.set('ix_mir',mst);drawMir();}); 
+}
+function quickFps(ms,cb){let f=0,t0=performance.now();(function l(n){f++;if(n-t0<ms)requestAnimationFrame(l);else cb(Math.round(f/(n-t0)*1000))})(t0)}
+const buildMir=()=>{
+  let v=null,msg='';
+  if(mst.cal&&hist.length)v=KEYS.map((_,i)=>Math.round(hist.reduce((s,a)=>s+a[i],0)/hist.length));
+  else if(mst.sensi)v=RNG.eq.map(r=>rnd(r[0],r[1]));
+  else if(mst.cal)msg='Para calibrar, salve uma sensibilidade no histórico da aba INFINIT SENSI.';
+  if(v){if(mst.prec)[1,2,3].forEach(i=>v[i]-=8);if(mst.recuo)[2,3,4].forEach(i=>v[i]-=10);v=v.map(clamp)}
+  const L=[];
+  if(v)L.push('SENSIBILIDADE: '+fmt(v));
+  if(msg)L.push(msg);
+  const st=[];
+  if(mst.trem)st.push('Apoie os cotovelos e segure o aparelho com firmeza. Deixe os polegares relaxados e arraste com movimentos curtos.');
+  if(mst.fixa)st.push('Mantenha o ponto de mira fixo no centro e arraste com movimentos curtos.');
+  if(st.length)L.push('PASSOS:\n- '+st.join('\n- '));
+  const show=()=>{mTxt=L.join('\n')};
+  show();
+};
+$('#mInj').onclick=()=>{
+  buildMir();if(mTxt)copy(mTxt,true);
+  const ua=navigator.userAgent,ios=/iPhone|iPad|iPod/.test(ua);
+  if(!ios&&!/Android/.test(ua))return;
+  const pkg=$('#mVer').value==='max'?'com.dts.freefiremax':'com.dts.freefireth';
+  let gone=false;
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)gone=true});
+  addEventListener('pagehide',()=>{gone=true},{once:true});
+  const tries=ios?['freefire://']:['intent://#Intent;package='+pkg+';end','intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package='+pkg+';end','intent://open#Intent;scheme=freefire;package='+pkg+';end'];
+  const store=ios?'https://apps.apple.com/app/id1300146617':'market://details?id='+pkg;
+  let i=0;
+  (function go(){if(gone||document.hidden)return;if(i<tries.length){location.href=tries[i++];setTimeout(go,900)}else location.href=store})();
+};
+drawMir();
+</script>
+</body>
+</html>

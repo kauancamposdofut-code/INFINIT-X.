@@ -4,13 +4,15 @@ name: Gerar APK INFINIT X
 on:
   workflow_dispatch:
   push:
+    branches:
+      - principal
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Baixar arquivos
+      - name: Baixar projeto
         uses: actions/checkout@v4
 
       - name: Preparar Java
@@ -19,25 +21,31 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Preparar Android
-        uses: android-actions/setup-android@v3
-
       - name: Preparar Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      - name: Criar projeto Android
+      - name: Preparar projeto Android
         shell: bash
         run: |
           set -e
 
+          echo "Verificando Android SDK..."
+          echo "SDK: $ANDROID_HOME"
+
+          if [ ! -d "$ANDROID_HOME/platforms/android-35" ]; then
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$ANDROID_HOME" "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+          fi
+
           HTML_FILE="$(find . -maxdepth 2 -type f -iname '*.html' ! -path './.git/*' | head -n 1)"
 
           if [ -z "$HTML_FILE" ]; then
-            echo "ERRO: Não encontrei o arquivo HTML na raiz do repositório."
+            echo "ERRO: arquivo HTML não encontrado."
             exit 1
           fi
+
+          echo "HTML encontrado: $HTML_FILE"
 
           mkdir -p app/src/main/assets
           mkdir -p app/src/main/java/com/infinitx/app
@@ -98,7 +106,6 @@ jobs:
 
           cat > app/src/main/AndroidManifest.xml <<'EOF'
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
               <uses-permission android:name="android.permission.INTERNET"/>
               <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
               <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
@@ -130,7 +137,6 @@ jobs:
                           <action android:name="android.intent.action.BOOT_COMPLETED"/>
                       </intent-filter>
                   </receiver>
-
               </application>
           </manifest>
           EOF
@@ -182,7 +188,12 @@ jobs:
               override fun onResume() {
                   super.onResume()
                   if (Settings.canDrawOverlays(this)) {
-                      startForegroundService(Intent(this, FloatingService::class.java))
+                      val intent = Intent(this, FloatingService::class.java)
+                      if (android.os.Build.VERSION.SDK_INT >= 26) {
+                          startForegroundService(intent)
+                      } else {
+                          startService(intent)
+                      }
                   }
               }
           }
@@ -197,14 +208,10 @@ jobs:
           import android.graphics.PixelFormat
           import android.graphics.Typeface
           import android.graphics.drawable.GradientDrawable
-          import android.os.Build
-          import android.os.Handler
-          import android.os.IBinder
-          import android.os.Looper
+          import android.os.*
           import android.provider.Settings
           import android.view.*
           import android.widget.*
-          import android.graphics.drawable.ColorDrawable
 
           class FloatingService : Service() {
               private lateinit var wm: WindowManager
@@ -223,19 +230,24 @@ jobs:
 
               private fun createNotification() {
                   val channel = "infinitx_channel"
+
                   if (Build.VERSION.SDK_INT >= 26) {
                       val ch = NotificationChannel(
-                          channel, "INFINIT X", NotificationManager.IMPORTANCE_LOW
+                          channel, "INFINIT X",
+                          NotificationManager.IMPORTANCE_LOW
                       )
                       getSystemService(NotificationManager::class.java)
                           .createNotificationChannel(ch)
                   }
 
-                  val notification = if (Build.VERSION.SDK_INT >= 26) {
+                  val builder = if (Build.VERSION.SDK_INT >= 26) {
                       Notification.Builder(this, channel)
                   } else {
                       Notification.Builder(this)
-                  }.setContentTitle("INFINIT X")
+                  }
+
+                  val notification = builder
+                      .setContentTitle("INFINIT X")
                       .setContentText("Bolha flutuante ativa")
                       .setSmallIcon(android.R.drawable.ic_dialog_info)
                       .build()
@@ -243,7 +255,9 @@ jobs:
                   startForeground(1, notification)
               }
 
-              override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+              override fun onStartCommand(
+                  intent: Intent?, flags: Int, startId: Int
+              ): Int {
                   if (Settings.canDrawOverlays(this)) showBubble()
                   return START_STICKY
               }
@@ -290,20 +304,24 @@ jobs:
                               moved = false
                               true
                           }
+
                           MotionEvent.ACTION_MOVE -> {
                               val dx = (event.rawX - touchX).toInt()
                               val dy = (event.rawY - touchY).toInt()
-                              if (kotlin.math.abs(dx) > 8 || kotlin.math.abs(dy) > 8)
-                                  moved = true
+                              if (kotlin.math.abs(dx) > 8 ||
+                                  kotlin.math.abs(dy) > 8) moved = true
+
                               bubbleParams.x = startX + dx
                               bubbleParams.y = startY + dy
                               wm.updateViewLayout(view, bubbleParams)
                               true
                           }
+
                           MotionEvent.ACTION_UP -> {
                               if (!moved) handleTap()
                               true
                           }
+
                           else -> true
                       }
                   }
@@ -313,7 +331,8 @@ jobs:
               }
 
               private fun handleTap() {
-                  val now = android.os.SystemClock.elapsedRealtime()
+                  val now = SystemClock.elapsedRealtime()
+
                   if (now - lastTap < 300) {
                       pendingTap?.let { handler.removeCallbacks(it) }
                       lastTap = 0L
@@ -348,7 +367,7 @@ jobs:
                   }
 
                   val close = TextView(this).apply {
-                      text = "✕"
+                      text = "X"
                       textSize = 20f
                       setTextColor(Color.WHITE)
                       gravity = Gravity.CENTER
@@ -369,7 +388,9 @@ jobs:
                   else WindowManager.LayoutParams.TYPE_PHONE
 
                   val params = WindowManager.LayoutParams(
-                      260, WindowManager.LayoutParams.WRAP_CONTENT, type,
+                      260,
+                      WindowManager.LayoutParams.WRAP_CONTENT,
+                      type,
                       WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                       PixelFormat.TRANSLUCENT
                   ).apply {
@@ -388,6 +409,7 @@ jobs:
                       setTextColor(Color.WHITE)
                       background = shape("#7028B8", 10)
                       setPadding(8, 14, 8, 14)
+
                       setOnClickListener {
                           Toast.makeText(
                               this@FloatingService,
@@ -439,14 +461,18 @@ jobs:
           import android.content.Context
           import android.content.Intent
           import android.provider.Settings
+          import android.os.Build
 
           class BootReceiver : BroadcastReceiver() {
               override fun onReceive(context: Context, intent: Intent) {
                   if (intent.action == Intent.ACTION_BOOT_COMPLETED &&
                       Settings.canDrawOverlays(context)) {
-                      context.startForegroundService(
-                          Intent(context, FloatingService::class.java)
-                      )
+                      val service = Intent(context, FloatingService::class.java)
+                      if (Build.VERSION.SDK_INT >= 26) {
+                          context.startForegroundService(service)
+                      } else {
+                          context.startService(service)
+                      }
                   }
               }
           }
@@ -455,7 +481,7 @@ jobs:
           gradle wrapper --gradle-version 8.9
           ./gradlew assembleDebug
 
-      - name: Disponibilizar APK
+      - name: Publicar APK
         uses: actions/upload-artifact@v4
         with:
           name: INFINIT-X-APK
